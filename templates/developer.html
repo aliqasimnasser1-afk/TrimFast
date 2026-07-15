@@ -1,0 +1,89 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#205c40">
+  <title>TrimFast</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="page-glow page-glow-one"></div>
+  <div class="page-glow page-glow-two"></div>
+
+  <header class="site-header container">
+    <a class="brand" href="/">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span class="brand-copy"><strong>TrimFast</strong><small>VIDEO &amp; AUDIO TRIMMER</small></span>
+    </a>
+    <a class="text-button developer-back-link" href="/">العودة إلى الأداة <span aria-hidden="true">←</span></a>
+  </header>
+
+  <main class="developer-page container">
+    <p class="eyebrow">من وراء TrimFast</p>
+
+    <section class="developer-card" aria-labelledby="developerTitle">
+      <div class="developer-avatar" aria-hidden="true">AQ</div>
+      <div class="developer-copy">
+        <span class="dialog-kicker">المطور</span>
+        <h1 id="developerTitle">علي قاسم</h1>
+        <p>أبني أدوات خفيفة وواضحة تساعدك على إنجاز عملك بسرعة، مثل TrimFast لقص الفيديو والصوت مع الحفاظ على الجودة.</p>
+
+        <nav class="developer-links" aria-label="روابط المطور">
+          <a class="developer-link" href="https://github.com/aliqasimnasser1-afk" target="_blank" rel="noopener noreferrer">
+            <span class="developer-link-icon developer-link-icon-github" aria-hidden="true">GH</span>
+            <span class="developer-link-copy"><strong>GitHub</strong><small>aliqasimnasser1-afk</small></span>
+            <span class="developer-link-arrow" aria-hidden="true">↗</span>
+          </a>
+          <a class="developer-link" href="https://x.com/Aliqaseem71" target="_blank" rel="noopener noreferrer">
+            <span class="developer-link-icon developer-link-icon-x" aria-hidden="true">𝕏</span>
+            <span class="developer-link-copy"><strong>X</strong><small>@Aliqaseem71</small></span>
+            <span class="developer-link-arrow" aria-hidden="true">↗</span>
+          </a>
+        </nav>
+      </div>
+    </section>
+
+    <section class="mobile-run-card" aria-labelledby="mobileRunTitle">
+      <div class="mobile-run-intro">
+        <span class="dialog-kicker">تشغيل من الجوال</span>
+        <h2 id="mobileRunTitle">افتح TrimFast على هاتفك</h2>
+        <p>شغّل الموقع على الكمبيوتر، ثم افتحه من الجوال المتصل بنفس شبكة Wi‑Fi. المعالجة وFFmpeg يعملان على الكمبيوتر.</p>
+      </div>
+      <ol class="mobile-steps">
+        <li>
+          <strong>شغّل الخادم على الكمبيوتر</strong>
+          <code>$env:HOST="0.0.0.0"; python app.py</code>
+        </li>
+        <li>
+          <strong>اعرف عنوان الكمبيوتر</strong>
+          <code>ipconfig</code>
+          <span>ابحث عن IPv4 مثل <b>192.168.1.10</b>.</span>
+        </li>
+        <li>
+          <strong>افتح الموقع من الجوال</strong>
+          <code>http://192.168.1.10:5000</code>
+          <span>استبدل الرقم بعنوان IPv4 لديك، واسمح لـ Python عبر جدار حماية Windows إذا ظهر تنبيه.</span>
+        </li>
+      </ol>
+    </section>
+  </main>
+
+  <footer class="site-footer container">
+    <div class="brand footer-brand">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span class="brand-copy"><strong>TrimFast</strong><small>VIDEO &amp; AUDIO TRIMMER</small></span>
+    </div>
+    <p>قص الفيديو والصوت، ببساطة.</p>
+    <div class="footer-meta">
+      <nav class="footer-links" aria-label="روابط الموقع">
+        <a href="/developer">المطور</a>
+        <a href="/privacy">الخصوصية</a>
+        <a href="/terms">الشروط</a>
+      </nav>
+      <span>© 2026 TrimFast — علي قاسم</span>
+    </div>
+  </footer>
+</body>
+</html>

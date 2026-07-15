@@ -1,0 +1,273 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#173f2e">
+  <meta name="description" content="TrimFast — أداة عربية سريعة لقص الفيديو والصوت مباشرة من المتصفح.">
+  <title>TrimFast</title>
+  <link rel="icon" type="image/x-icon" href="/static/favicon.ico">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+  <div class="page-glow page-glow-one" aria-hidden="true"></div>
+  <div class="page-glow page-glow-two" aria-hidden="true"></div>
+
+  <header class="site-header container">
+    <a class="brand" href="/" aria-label="TrimFast — الصفحة الرئيسية">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span class="brand-copy">
+        <strong>TrimFast</strong>
+        <small>VIDEO &amp; AUDIO TRIMMER</small>
+      </span>
+    </a>
+    <div class="header-note">
+      <span class="privacy-dot" aria-hidden="true"></span>
+      ملفاتك تُعالج بأمان
+    </div>
+    <div class="header-actions">
+      <button id="themeButton" class="theme-button" type="button" aria-label="تفعيل الوضع الليلي" title="الوضع الليلي">
+        <span aria-hidden="true">☾</span>
+      </button>
+      <button id="settingsButton" class="settings-button" type="button" aria-haspopup="dialog" aria-controls="settingsDialog">
+        <span aria-hidden="true">⚙</span> الإعدادات
+      </button>
+    </div>
+  </header>
+
+  <main>
+    <section class="hero container" aria-labelledby="hero-title">
+      <div class="eyebrow"><span aria-hidden="true">✦</span> قص دقيق، بلا تعقيد</div>
+      <h1 id="hero-title">خذ اللقطة التي تريدها.<br><span>واترك الباقي لنا.</span></h1>
+      <p>ارفع فيديو أو ملفًا صوتيًا، حدّد البداية والنهاية، ثم حمّل المقطع بأعلى جودة ممكنة.</p>
+      <div class="format-pills" aria-label="الصيغ المدعومة">
+        <span>MP4</span><span>MOV</span><span>WEBM</span><span>MP3</span><span>WAV</span>
+      </div>
+    </section>
+
+    <section class="tool-section container" aria-label="أداة قص الملفات">
+      <div class="tool-shell">
+        <ol class="steps" aria-label="مراحل القص">
+          <li class="step is-active" data-step="1"><span>1</span><b>ارفع الملف</b></li>
+          <li class="step-line" aria-hidden="true"></li>
+          <li class="step" data-step="2"><span>2</span><b>حدّد المقطع</b></li>
+          <li class="step-line" aria-hidden="true"></li>
+          <li class="step" data-step="3"><span>3</span><b>حمّل النتيجة</b></li>
+        </ol>
+
+        <div id="uploadView" class="upload-view">
+          <input id="fileInput" type="file" accept=".mp4,.mov,.webm,.mp3,.wav,video/mp4,video/quicktime,video/webm,audio/mpeg,audio/wav" hidden>
+          <button id="dropZone" class="drop-zone" type="button">
+            <span class="upload-icon" aria-hidden="true"><i></i></span>
+            <strong>اسحب ملفك وأفلته هنا</strong>
+            <span>أو اضغط لاختيار ملف من جهازك</span>
+            <em>MP4, MOV, WEBM, MP3, WAV</em>
+          </button>
+          <div class="upload-assurances" aria-label="مزايا الأداة">
+            <span><i aria-hidden="true">✓</i> بلا تسجيل</span>
+            <span><i aria-hidden="true">✓</i> أعلى جودة ممكنة</span>
+            <span><i aria-hidden="true">✓</i> يعمل على كل الأجهزة</span>
+          </div>
+        </div>
+
+        <div id="progressView" class="progress-view" hidden aria-live="polite">
+          <div class="progress-top">
+            <div>
+              <span id="progressKicker">جاري رفع الملف</span>
+              <strong id="progressTitle">لحظات ونجهّز لك مساحة العمل…</strong>
+            </div>
+            <b id="progressPercent">0%</b>
+          </div>
+          <div id="progressBar" class="progress-track" role="progressbar" aria-valuemin="0" aria-valuemax="100" aria-valuenow="0">
+            <span></span>
+          </div>
+          <p id="progressNote">لا تغلق الصفحة حتى يكتمل الرفع.</p>
+          <button id="cancelOperationButton" class="cancel-operation-button" type="button">إلغاء العملية</button>
+        </div>
+
+        <div id="editorView" class="editor-view" hidden>
+          <div class="file-strip">
+            <div class="file-type" id="fileType">MP4</div>
+            <div class="file-copy">
+              <strong id="fileName">اسم الملف</strong>
+              <span><b id="fileSize">0 MB</b><i></i><b id="fileDuration">00:00</b></span>
+            </div>
+            <button id="replaceButton" class="text-button" type="button">تغيير الملف</button>
+          </div>
+
+          <div class="editor-grid">
+            <div class="preview-column">
+              <div id="mediaFrame" class="media-frame">
+                <video id="videoPreview" controls playsinline preload="metadata" hidden></video>
+                <audio id="audioPreview" controls preload="metadata" hidden></audio>
+                <div id="audioArtwork" class="audio-artwork" hidden aria-hidden="true">
+                  <span class="sound-bars"><i></i><i></i><i></i><i></i><i></i></span>
+                  <b>ملف صوتي</b>
+                </div>
+                <span class="preview-label">المعاينة</span>
+                <div id="shortcutFeedback" class="shortcut-feedback" aria-live="polite" hidden></div>
+              </div>
+              <div id="mobileMarkerControls" class="mobile-marker-controls" aria-label="اختصارات اللمس">
+                <div class="mobile-marker-status">
+                  <span>لحظة التشغيل</span>
+                  <strong id="mobilePlayheadTime">00:00.00</strong>
+                </div>
+                <div class="mobile-marker-buttons">
+                  <button id="mobileStartMarker" class="mobile-marker-button mobile-marker-start" type="button">
+                    <span class="mobile-marker-icon" aria-hidden="true">ب</span>
+                    <span><strong>تحديد البداية</strong><small id="mobileStartMarkerTime">00:00.00</small></span>
+                  </button>
+                  <button id="mobileEndMarker" class="mobile-marker-button mobile-marker-end" type="button">
+                    <span class="mobile-marker-icon" aria-hidden="true">ن</span>
+                    <span><strong>تحديد النهاية</strong><small id="mobileEndMarkerTime">00:00.00</small></span>
+                  </button>
+                </div>
+              </div>
+              <p id="previewSupportNote" class="support-note" hidden>قد لا يدعم متصفحك معاينة ترميز هذا الملف، لكن لا يزال بإمكانك قصه وتنزيله.</p>
+            </div>
+
+            <div class="controls-column">
+              <div class="control-heading">
+                <div>
+                  <span>حدّد مقطعك</span>
+                  <h2>من أين يبدأ، وأين ينتهي؟</h2>
+                </div>
+                <div id="selectedDuration" class="duration-badge">مدة المقطع: 00:00</div>
+              </div>
+
+              <div id="clipVisual" class="clip-visual" aria-hidden="true">
+                <span class="clip-selection"></span>
+                <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+              </div>
+
+              <div id="aspectControl" class="aspect-control">
+                <div class="aspect-control-heading">
+                  <label>أبعاد الفيديو</label>
+                  <span>اختياري — القص السريع يعمل مع «الأصلية»</span>
+                </div>
+                <div class="aspect-options" role="radiogroup" aria-label="أبعاد الفيديو">
+                  <button class="aspect-option is-selected" type="button" data-aspect="original" aria-pressed="true"><strong>الأصلية</strong><small>بدون تغيير</small></button>
+                  <button class="aspect-option" type="button" data-aspect="vertical" aria-pressed="false"><strong>9:16</strong><small>TikTok</small></button>
+                  <button class="aspect-option" type="button" data-aspect="horizontal" aria-pressed="false"><strong>16:9</strong><small>YouTube</small></button>
+                  <button class="aspect-option" type="button" data-aspect="square" aria-pressed="false"><strong>1:1</strong><small>Instagram</small></button>
+                </div>
+              </div>
+
+              <div class="time-control">
+                <div class="time-control-top">
+                  <label for="startInput"><span class="start-dot"></span> البداية</label>
+                  <div class="time-input-wrap">
+                    <input id="startInput" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+                    <small id="startFormatted">00:00.00</small>
+                  </div>
+                </div>
+                <input id="startRange" class="range-input" type="range" min="0" max="100" step="0.01" value="0" aria-label="وقت البداية">
+              </div>
+
+              <div class="time-control">
+                <div class="time-control-top">
+                  <label for="endInput"><span class="end-dot"></span> النهاية</label>
+                  <div class="time-input-wrap">
+                    <input id="endInput" type="number" min="0" step="0.01" value="0" inputmode="decimal">
+                    <small id="endFormatted">00:00.00</small>
+                  </div>
+                </div>
+                <input id="endRange" class="range-input range-input-end" type="range" min="0" max="100" step="0.01" value="100" aria-label="وقت النهاية">
+              </div>
+
+              <div class="action-row">
+                <button id="previewButton" class="secondary-button" type="button"><span aria-hidden="true">▶</span> معاينة المقطع</button>
+                <button id="trimButton" class="primary-button" type="button">قصّ الملف الآن <span aria-hidden="true">←</span></button>
+              </div>
+              <div class="shortcut-hint" aria-label="اختصارات لوحة المفاتيح">
+                <span>اختصارات سريعة</span>
+                <button id="startShortcutHint" type="button"><kbd>I</kbd> تثبيت البداية</button>
+                <button id="endShortcutHint" type="button"><kbd>O</kbd> تثبيت النهاية</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div id="resultView" class="result-view" hidden>
+          <div class="success-mark" aria-hidden="true">✓</div>
+          <span class="success-kicker">تمّت العملية بنجاح</span>
+          <h2>مقطعك جاهز!</h2>
+          <p>تم قص الملف مع الحفاظ على أعلى جودة ممكنة.</p>
+          <div class="result-file">
+            <div class="file-type" id="resultType">MP4</div>
+            <div class="file-copy">
+              <strong id="resultName">الملف المقصوص</strong>
+              <span><b id="resultSize">0 MB</b><i></i><b id="resultDuration">00:00</b></span>
+            </div>
+          </div>
+          <a id="downloadButton" class="primary-button download-button" href="#">تحميل الملف <span aria-hidden="true">↓</span></a>
+          <button id="newFileButton" class="text-button new-file-button" type="button">قص ملف آخر</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="benefits container" aria-label="لماذا قصّها؟">
+      <article>
+        <span class="benefit-number">01</span>
+        <h2>الجودة أولًا</h2>
+        <p>قص دقيق حتى مستوى الإطار مع إعدادات تحفظ أدق تفاصيل الصورة والصوت.</p>
+      </article>
+      <article>
+        <span class="benefit-number">02</span>
+        <h2>واضح وسريع</h2>
+        <p>ثلاث خطوات فقط، من الملف الكامل إلى المقطع الذي تريده.</p>
+      </article>
+      <article>
+        <span class="benefit-number">03</span>
+        <h2>لكل الشاشات</h2>
+        <p>واجهة مريحة باللمس على الجوال، ودقيقة على شاشة الكمبيوتر.</p>
+      </article>
+    </section>
+  </main>
+
+  <footer class="site-footer container">
+    <div class="brand footer-brand">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span class="brand-copy"><strong>TrimFast</strong><small>VIDEO &amp; AUDIO TRIMMER</small></span>
+    </div>
+    <p>قص الفيديو والصوت، ببساطة.</p>
+    <div class="footer-meta">
+      <nav class="footer-links" aria-label="روابط الموقع">
+        <a href="/developer">المطور</a>
+        <a href="/privacy">الخصوصية</a>
+        <a href="/terms">الشروط</a>
+      </nav>
+      <span>© 2026 TrimFast — علي قاسم</span>
+    </div>
+  </footer>
+
+  <dialog id="settingsDialog" class="settings-dialog" aria-labelledby="settingsTitle">
+    <div class="settings-dialog-inner">
+      <div class="settings-dialog-head">
+        <div>
+          <span class="dialog-kicker">تحكم أسرع</span>
+          <h2 id="settingsTitle">اختصارات لوحة المفاتيح</h2>
+        </div>
+        <button id="closeSettingsButton" class="dialog-close" type="button" aria-label="إغلاق الإعدادات">×</button>
+      </div>
+      <p class="settings-description">أثناء تشغيل المعاينة، اضغط الاختصار لتثبيت اللحظة الحالية كبداية أو نهاية للمقطع.</p>
+      <div class="shortcut-setting-row">
+        <div><strong>تثبيت البداية</strong><span>نقطة الدخول للمقطع</span></div>
+        <button class="shortcut-capture" data-shortcut-target="start" type="button"><kbd id="settingsStartKey">I</kbd><span>تغيير الزر</span></button>
+      </div>
+      <div class="shortcut-setting-row">
+        <div><strong>تثبيت النهاية</strong><span>نقطة الخروج للمقطع</span></div>
+        <button class="shortcut-capture" data-shortcut-target="end" type="button"><kbd id="settingsEndKey">O</kbd><span>تغيير الزر</span></button>
+      </div>
+      <p id="shortcutSettingsNote" class="settings-note">اختر زرًا واحدًا لكل إجراء. الإعدادات تُحفظ على هذا الجهاز.</p>
+      <div class="settings-dialog-actions">
+        <button id="resetShortcutsButton" class="text-button" type="button">إعادة الافتراضي</button>
+        <button id="saveSettingsButton" class="primary-button" type="button">حفظ الإعدادات</button>
+      </div>
+    </div>
+  </dialog>
+
+  <div id="toast" class="toast" role="alert" hidden></div>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>

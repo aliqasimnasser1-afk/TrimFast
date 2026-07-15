@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#205c40">
+  <meta name="description" content="{% block meta_description %}المعلومات القانونية لخدمة TrimFast.{% endblock %}">
+  <title>TrimFast</title>
+  <link rel="icon" href="{{ url_for('static', filename='favicon.ico') }}" type="image/x-icon">
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script src="{{ url_for('static', filename='legal.js') }}" defer></script>
+</head>
+<body>
+  <div class="page-glow page-glow-one" aria-hidden="true"></div>
+  <div class="page-glow page-glow-two" aria-hidden="true"></div>
+
+  <header class="site-header container">
+    <a class="brand" href="{{ url_for('index') }}" aria-label="TrimFast — الصفحة الرئيسية">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span class="brand-copy"><strong>TrimFast</strong><small>VIDEO &amp; AUDIO TRIMMER</small></span>
+    </a>
+    <a class="text-button developer-back-link" href="{{ url_for('index') }}">العودة إلى الأداة <span aria-hidden="true">←</span></a>
+  </header>
+
+  <main class="legal-page container">
+    <header class="legal-hero">
+      <p class="eyebrow">{% block eyebrow %}{% endblock %}</p>
+      <h1>{% block page_title %}{% endblock %}</h1>
+      <p>{% block page_intro %}{% endblock %}</p>
+      <div class="legal-date">
+        <span>آخر تحديث</span>
+        <time datetime="2026-07-15">15 يوليو 2026</time>
+      </div>
+    </header>
+
+    <div class="legal-layout">
+      <aside class="legal-summary">
+        <span class="dialog-kicker">ملخص سريع</span>
+        {% block summary %}{% endblock %}
+        <a href="#contact">لديك استفسار؟ تواصل معنا</a>
+      </aside>
+
+      <article class="legal-content">
+        {% block content %}{% endblock %}
+      </article>
+    </div>
+  </main>
+
+  <footer class="site-footer container">
+    <div class="brand footer-brand">
+      <span class="brand-mark" aria-hidden="true">T</span>
+      <span class="brand-copy"><strong>TrimFast</strong><small>VIDEO &amp; AUDIO TRIMMER</small></span>
+    </div>
+    <p>قص الفيديو والصوت، ببساطة.</p>
+    <div class="footer-meta">
+      <nav class="footer-links" aria-label="روابط الموقع">
+        <a href="{{ url_for('developer') }}">المطور</a>
+        <a href="{{ url_for('privacy') }}">الخصوصية</a>
+        <a href="{{ url_for('terms') }}">الشروط</a>
+      </nav>
+      <span>© 2026 TrimFast — علي قاسم</span>
+    </div>
+  </footer>
+</body>
+</html>
