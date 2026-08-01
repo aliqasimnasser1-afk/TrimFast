@@ -1,0 +1,18 @@
+{
+  "name": "TrimFast — قص الفيديو والصوت",
+  "short_name": "TrimFast",
+  "description": "أداة قص وتعديل الفيديو والصوت الاحترافية مباشرة من المتصفح.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#090b0e",
+  "theme_color": "#090b0e",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/static/favicon.svg",
+      "sizes": "512x512 192x192 128x128 64x64 32x32",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

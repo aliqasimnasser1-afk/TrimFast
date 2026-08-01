@@ -1,0 +1,10 @@
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+storage/*
+!storage/.gitkeep
+.env
+ffmpeg/
+*.log
+.DS_Store

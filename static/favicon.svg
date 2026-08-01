@@ -1,0 +1,45 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="100%" height="100%">
+  <defs>
+    <linearGradient id="bgGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#181d26"/>
+      <stop offset="100%" stop-color="#090b0e"/>
+    </linearGradient>
+    <linearGradient id="goldGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#FFE072"/>
+      <stop offset="50%" stop-color="#FFAA00"/>
+      <stop offset="100%" stop-color="#FF6600"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="16" result="blur" />
+      <feComposite in="SourceGraphic" in2="blur" operator="over" />
+    </filter>
+  </defs>
+  
+  <!-- Outer Rounded Obsidian Card -->
+  <rect width="512" height="512" rx="128" fill="url(#bgGrad)" stroke="rgba(255, 208, 86, 0.35)" stroke-width="12"/>
+  
+  <!-- Subtle Glowing Circle Background -->
+  <circle cx="256" cy="256" r="180" fill="#FFAA00" opacity="0.08" filter="blur(30px)"/>
+  
+  <!-- Scissors & Film Strip Icon Symbol -->
+  <g filter="url(#glow)">
+    <!-- Scissor Blades -->
+    <path d="M156 120 C180 120, 200 140, 200 164 C200 182, 188 197, 172 204 L256 256 L368 144 C376 136, 388 136, 396 144 C404 152, 404 164, 396 172 L284 284 L396 396 C404 404, 404 416, 396 424 C388 432, 376 432, 368 424 L256 312 L172 364 C188 371, 200 386, 200 404 C200 428, 180 448, 156 448 C132 448, 112 428, 112 404 C112 380, 132 360, 156 360 C166 360, 175 364, 183 370 L240 256 L183 142 C175 148, 166 152, 156 152 C132 152, 112 132, 112 108 C112 84, 132 64, 156 64 C180 64, 200 84, 200 108" fill="none"/>
+    
+    <!-- Scissor Rings -->
+    <circle cx="156" cy="120" r="44" stroke="url(#goldGrad)" stroke-width="24" fill="none"/>
+    <circle cx="156" cy="392" r="44" stroke="url(#goldGrad)" stroke-width="24" fill="none"/>
+    
+    <!-- Crossed Blades -->
+    <path d="M188 152 L368 332" stroke="url(#goldGrad)" stroke-width="26" stroke-linecap="round"/>
+    <path d="M188 360 L368 180" stroke="url(#goldGrad)" stroke-width="26" stroke-linecap="round"/>
+    
+    <!-- Center Pivot Pin -->
+    <circle cx="278" cy="256" r="14" fill="#090b0e" stroke="url(#goldGrad)" stroke-width="8"/>
+    
+    <!-- Waveform Cutting Lines Right -->
+    <line x1="390" y1="210" x2="430" y2="210" stroke="url(#goldGrad)" stroke-width="12" stroke-linecap="round"/>
+    <line x1="370" y1="256" x2="445" y2="256" stroke="url(#goldGrad)" stroke-width="14" stroke-linecap="round"/>
+    <line x1="390" y1="302" x2="430" y2="302" stroke="url(#goldGrad)" stroke-width="12" stroke-linecap="round"/>
+  </g>
+</svg>
