@@ -235,12 +235,47 @@ def cleanup_stale_jobs(force: bool = False) -> None:
                     shutil.rmtree(resolved, ignore_errors=True)
             except OSError:
                 pass
+def save_job_meta(job_id: str, job: dict) -> None:
+    meta_path = Path(job["directory"]) / "job_meta.json"
+    serializable = {k: v for k, v in job.items() if k != "process"}
+    try:
+        meta_path.write_text(json.dumps(serializable, ensure_ascii=False), encoding="utf-8")
+    except Exception:
+        pass
+
+
+def load_job_meta(job_id: str) -> dict | None:
+    job_dir = STORAGE_DIR / job_id
+    meta_path = job_dir / "job_meta.json"
+    if meta_path.exists():
+        try:
+            job = json.loads(meta_path.read_text(encoding="utf-8"))
+            job["source_path"] = str(job_dir / f"source.{job['extension']}")
+            job["output_path"] = str(job_dir / f"{secure_filename(Path(job['original_name']).stem)}-trimmed.{job['extension']}")
+            job["process"] = None
+            return job
+        except Exception:
+            return None
+    return None
+
+
+def get_job(job_id: str) -> dict | None:
+    with JOBS_LOCK:
+        job = JOBS.get(job_id)
+        if job:
+            return job
+        loaded = load_job_meta(job_id)
+        if loaded:
+            JOBS[job_id] = loaded
+            return loaded
+    return None
 
 
 def update_job(job_id: str, **values) -> None:
     with JOBS_LOCK:
         if job_id in JOBS:
             JOBS[job_id].update(values)
+            save_job_meta(job_id, JOBS[job_id])
 
 
 def run_ffmpeg(command: list[str], job_id: str, clip_duration: float) -> tuple[bool, str]:
@@ -523,6 +558,7 @@ def upload_file():
     }
     with JOBS_LOCK:
         JOBS[job_id] = job
+        save_job_meta(job_id, job)
 
     return jsonify(
         id=job_id,
@@ -613,6 +649,7 @@ def upload_chunk():
     }
     with JOBS_LOCK:
         JOBS[job_id] = job
+        save_job_meta(job_id, job)
 
     return jsonify(
         id=job_id,
@@ -627,8 +664,7 @@ def upload_chunk():
 
 @app.get("/api/files/<job_id>/source")
 def preview_source(job_id: str):
-    with JOBS_LOCK:
-        job = dict(JOBS.get(job_id, {}))
+    job = get_job(job_id)
     if not job:
         return jsonify(error="انتهت صلاحية الملف أو لم يعد موجودًا."), 404
     return send_file(
@@ -643,10 +679,10 @@ def preview_source(job_id: str):
 def start_trim(job_id: str):
     if not FFMPEG:
         return jsonify(error="FFmpeg غير متوفر على الخادم حاليًا."), 503
+    job = get_job(job_id)
+    if not job:
+        return jsonify(error="انتهت صلاحية الملف أو لم يعد موجودًا."), 404
     with JOBS_LOCK:
-        job = JOBS.get(job_id)
-        if not job:
-            return jsonify(error="انتهت صلاحية الملف أو لم يعد موجودًا."), 404
         if job["status"] == "processing":
             return jsonify(error="المعالجة جارية بالفعل."), 409
 
@@ -689,10 +725,10 @@ def start_trim(job_id: str):
 
 @app.post("/api/jobs/<job_id>/cancel")
 def cancel_job(job_id: str):
+    job = get_job(job_id)
+    if not job:
+        return jsonify(error="انتهت صلاحية الملف أو لم يعد موجودًا."), 404
     with JOBS_LOCK:
-        job = JOBS.get(job_id)
-        if not job:
-            return jsonify(error="انتهت صلاحية الملف أو لم يعد موجودًا."), 404
         if job["status"] in {"completed", "failed", "cancelled"}:
             return jsonify(status=job["status"])
         process = job.get("process")
@@ -709,8 +745,7 @@ def cancel_job(job_id: str):
 
 @app.get("/api/jobs/<job_id>")
 def job_status(job_id: str):
-    with JOBS_LOCK:
-        job = dict(JOBS.get(job_id, {}))
+    job = get_job(job_id)
     if not job:
         return jsonify(error="انتهت صلاحية الملف أو لم يعد موجودًا."), 404
     return jsonify(public_job(job_id, job))
@@ -721,8 +756,7 @@ def stream_job_status(job_id: str):
     def generate():
         last_payload = None
         while True:
-            with JOBS_LOCK:
-                job = dict(JOBS.get(job_id, {}))
+            job = get_job(job_id)
             if not job:
                 err_data = json.dumps({"error": "انتهت صلاحية الملف أو لم يعد موجودًا."})
                 yield f"data: {err_data}\n\n"
@@ -751,8 +785,7 @@ def stream_job_status(job_id: str):
 
 @app.get("/api/jobs/<job_id>/download")
 def download_result(job_id: str):
-    with JOBS_LOCK:
-        job = dict(JOBS.get(job_id, {}))
+    job = get_job(job_id)
     if not job or job.get("status") != "completed":
         return jsonify(error="الملف المقصوص غير جاهز بعد."), 404
     response = send_file(

@@ -848,30 +848,48 @@ async function uploadFileChunked(file) {
       note: "يرجى الانتظار، يتم رفع الملف بأعلى سرعة ممكنة.",
     });
 
-    try {
-      const response = await fetch("/api/upload/chunk", {
-        method: "POST",
-        body: formData,
-      });
-      if (response.status === 404) {
-        uploadStandardFile(file);
-        return;
-      }
-      const data = await response.json();
-      if (!response.ok) throw new Error(data.error);
+    let success = false;
+    let attempt = 0;
+    const maxAttempts = 5;
+    let errorMsg = "";
 
-      if (data.id) {
-        setProgress(100, { title: "تم رفع الملف بالكامل — نجهّز المعاينة…" });
-        window.setTimeout(() => configureEditor(data), 200);
-        return;
+    while (!success && attempt < maxAttempts) {
+      if (state.uploadRequest === "cancelled") return;
+      attempt++;
+      try {
+        const response = await fetch("/api/upload/chunk", {
+          method: "POST",
+          body: formData,
+        });
+        if (response.status === 404) {
+          uploadStandardFile(file);
+          return;
+        }
+        const data = await response.json();
+        if (!response.ok) throw new Error(data.error || "خطأ غير معروف في الخادم");
+
+        if (data.id && i === totalChunks - 1) {
+          setProgress(100, { title: "تم رفع الملف بالكامل — نجهّز المعاينة…" });
+          window.setTimeout(() => configureEditor(data), 200);
+          return;
+        }
+        success = true;
+      } catch (err) {
+        errorMsg = err.message || "فشل الاتصال بالخادم";
+        console.warn(`Chunk ${i} upload failed (attempt ${attempt}/${maxAttempts}): ${errorMsg}`);
+        if (attempt < maxAttempts) {
+          await new Promise((resolve) => setTimeout(resolve, 2000));
+        }
       }
-    } catch (err) {
-      if (err.message && err.message.includes("404")) {
+    }
+
+    if (!success) {
+      if (errorMsg.includes("404")) {
         uploadStandardFile(file);
-        return;
+      } else {
+        showView("upload");
+        showError(`فشل رفع أجزاء الملف بعد عدة محاولات: ${errorMsg}`);
       }
-      showView("upload");
-      showError(err.message || "فشل رفع أجزاء الملف.");
       return;
     }
   }
