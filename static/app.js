@@ -38,6 +38,7 @@ const elements = {
   resultSize: document.querySelector("#resultSize"),
   resultDuration: document.querySelector("#resultDuration"),
   downloadButton: document.querySelector("#downloadButton"),
+  shareButton: document.querySelector("#shareButton"),
   newFileButton: document.querySelector("#newFileButton"),
   toast: document.querySelector("#toast"),
   themeButton: document.querySelector("#themeButton"),
@@ -982,6 +983,35 @@ async function uploadFile(file) {
   }
 
   uploadStandardFile(file);
+}async function shareResultFile() {
+  if (!elements.downloadButton.href || elements.downloadButton.href === "#") return;
+  const originalText = elements.shareButton.textContent;
+  try {
+    elements.shareButton.disabled = true;
+    elements.shareButton.textContent = "⌛ جاري تجهيز المشاركة...";
+
+    const response = await fetch(elements.downloadButton.href);
+    const blob = await response.blob();
+    const extension = state.extension ? state.extension.toLowerCase() : "mp4";
+    const filename = `${elements.resultName.textContent || "video-trimmed"}`;
+    const file = new File([blob], filename, { type: blob.type || "video/mp4" });
+
+    if (navigator.canShare && navigator.canShare({ files: [file] })) {
+      await navigator.share({
+        files: [file],
+        title: "TrimFast Video",
+        text: "تم قص المقطع بواسطة TrimFast",
+      });
+    } else {
+      showError("عذراً، هذا المتصفح لا يدعم مشاركة الملفات المباشرة.");
+    }
+  } catch (err) {
+    console.error("Share failed:", err);
+    showError("فشلت مشاركة وحفظ الملف. يرجى استخدام زر التحميل المباشر.");
+  } finally {
+    elements.shareButton.disabled = false;
+    elements.shareButton.textContent = originalText;
+  }
 }
 
 function previewClip() {
@@ -1183,6 +1213,9 @@ function showResult(data) {
   elements.resultSize.textContent = formatBytes(data.output_size);
   elements.resultDuration.textContent = formatDuration(data.output_duration || (end - start));
   elements.downloadButton.href = data.download_url;
+  if (elements.shareButton) {
+    elements.shareButton.style.display = navigator.share ? "inline-flex" : "none";
+  }
   showView("result");
   setStep(3);
   playCompletionChime();
@@ -1365,6 +1398,9 @@ elements.replaceButton.addEventListener("click", resetAll);
 elements.newFileButton.addEventListener("click", resetAll);
 if (elements.expiredResetBtn) {
   elements.expiredResetBtn.addEventListener("click", resetAll);
+}
+if (elements.shareButton) {
+  elements.shareButton.addEventListener("click", shareResultFile);
 }
 
 if (elements.dockStartBtn) {
