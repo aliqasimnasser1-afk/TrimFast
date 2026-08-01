@@ -834,6 +834,8 @@ async function uploadFileChunked(file) {
     .map((b) => b.toString(16).padStart(2, "0"))
     .join("");
 
+  const uploadStartTime = Date.now();
+
   for (let i = 0; i < totalChunks; i++) {
     if (state.uploadRequest === "cancelled") return;
 
@@ -852,10 +854,22 @@ async function uploadFileChunked(file) {
     const currentMB = (end / (1024 * 1024)).toFixed(1);
     const totalMB = (file.size / (1024 * 1024)).toFixed(1);
 
+    const elapsedSeconds = (Date.now() - uploadStartTime) / 1000;
+    const uploadedBytesSoFar = start;
+    let speedText = "جاري الحساب...";
+    if (elapsedSeconds > 0.5 && uploadedBytesSoFar > 0) {
+      const speedMBs = (uploadedBytesSoFar / (1024 * 1024)) / elapsedSeconds;
+      if (speedMBs >= 1.0) {
+        speedText = `${speedMBs.toFixed(1)} MB/ثانية`;
+      } else {
+        speedText = `${(speedMBs * 1024).toFixed(0)} KB/ثانية`;
+      }
+    }
+
     setProgress(percent, {
       kicker: "جاري الرفع",
       title: `جاري رفع الملف... (${currentMB} / ${totalMB} MB)`,
-      note: "يرجى الانتظار، يتم رفع الملف بأعلى سرعة ممكنة.",
+      note: `سرعة الرفع الحالية: ${speedText} • يرجى عدم إغلاق الصفحة.`,
     });
 
     let success = false;
