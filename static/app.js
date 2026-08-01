@@ -316,6 +316,15 @@ function updateTimeUI(source) {
 
 async function fetchAndDecodeAudio(url) {
   if (!elements.waveformCanvas) return;
+
+  // Skip heavy downloading/decoding for videos and large media files to prevent blocking player streaming
+  if (state.mediaType === "video" || state.duration > 120) {
+    elements.waveformStatus.textContent = "المخطط التفاعلي";
+    state.audioPeaks = Array.from({ length: 130 }, (_, i) => 0.18 + 0.7 * Math.abs(Math.sin(i * 0.18 + (i % 5))));
+    drawWaveform();
+    return;
+  }
+
   elements.waveformStatus.textContent = "جاري تحليل رسم الموجات الصوتية...";
   try {
     const response = await fetch(url);
