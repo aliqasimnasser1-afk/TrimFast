@@ -37,7 +37,7 @@ ASPECT_FILTERS = {
     "horizontal": "scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080",
     "square": "scale=1080:1080:force_original_aspect_ratio=increase,crop=1080:1080",
 }
-MAX_AGE_SECONDS = 3 * 60
+MAX_AGE_SECONDS = 10 * 60
 CLEANUP_INTERVAL_SECONDS = 10
 
 app = Flask(__name__)

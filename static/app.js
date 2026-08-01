@@ -813,7 +813,12 @@ function probeLocalMediaFast(file) {
 }
 
 async function uploadFileChunked(file) {
-  const chunkSize = 16 * 1024 * 1024;
+  let chunkSize = 16 * 1024 * 1024; // 16MB default
+  if (file.size > 800 * 1024 * 1024) {
+    chunkSize = 48 * 1024 * 1024; // 48MB for files > 800MB
+  } else if (file.size > 300 * 1024 * 1024) {
+    chunkSize = 32 * 1024 * 1024; // 32MB for files > 300MB
+  }
   const totalChunks = Math.ceil(file.size / chunkSize);
   const jobId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
     .map((b) => b.toString(16).padStart(2, "0"))
@@ -838,9 +843,9 @@ async function uploadFileChunked(file) {
     const totalMB = (file.size / (1024 * 1024)).toFixed(1);
 
     setProgress(percent, {
-      kicker: "رفع فائق التقسيم للملفات الضخمة",
-      title: `رفع الجزء ${i + 1} من ${totalChunks} (${currentMB} / ${totalMB} MB)`,
-      note: "نستخدم الرفع المقسم الفائق للملفات الكبيرة والمسلسلات.",
+      kicker: "جاري الرفع",
+      title: `جاري رفع الملف... (${currentMB} / ${totalMB} MB)`,
+      note: "يرجى الانتظار، يتم رفع الملف بأعلى سرعة ممكنة.",
     });
 
     try {
