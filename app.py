@@ -633,7 +633,7 @@ def preview_source(job_id: str):
         return jsonify(error="انتهت صلاحية الملف أو لم يعد موجودًا."), 404
     return send_file(
         job["source_path"],
-        mimetype=MIME_TYPES[job["extension"]],
+        mimetype=MIME_TYPES.get(job["extension"], "application/octet-stream"),
         conditional=True,
         max_age=0,
     )
@@ -757,7 +757,7 @@ def download_result(job_id: str):
         return jsonify(error="الملف المقصوص غير جاهز بعد."), 404
     response = send_file(
         job["output_path"],
-        mimetype=MIME_TYPES[job["extension"]],
+        mimetype=MIME_TYPES.get(job["extension"], "application/octet-stream"),
         as_attachment=True,
         download_name=job["download_name"],
         conditional=True,

@@ -20,4 +20,4 @@ COPY . .
 EXPOSE 5000
 
 # Command to run Gunicorn WSGI server
-CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app", "--workers", "2", "--timeout", "120"]
+CMD ["gunicorn", "--bind", "0.0.0.0:5000", "app:app", "--workers", "2", "--threads", "4", "--worker-class", "gthread", "--timeout", "120"]
