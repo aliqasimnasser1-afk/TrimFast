@@ -2,6 +2,8 @@
 
 موقع عربي بسيط لقص الفيديو والملفات الصوتية باستخدام Flask وFFmpeg.
 
+🔗 **رابط الموقع المباشر:** [https://trimfast.onrender.com/](https://trimfast.onrender.com/)
+
 
 ## الخصوصية والشروط
 
