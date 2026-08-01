@@ -664,15 +664,59 @@ def upload_chunk():
 
 @app.get("/api/files/<job_id>/source")
 def preview_source(job_id: str):
+    import re
     job = get_job(job_id)
     if not job:
         return jsonify(error="انتهت صلاحية الملف أو لم يعد موجودًا."), 404
-    return send_file(
-        job["source_path"],
-        mimetype=MIME_TYPES.get(job["extension"], "application/octet-stream"),
-        conditional=True,
-        max_age=0,
+
+    path = Path(job["source_path"])
+    if not path.exists():
+        return jsonify(error="الملف غير موجود."), 404
+
+    file_size = path.stat().st_size
+    range_header = request.headers.get("Range", None)
+    mimetype = MIME_TYPES.get(job["extension"], "video/mp4")
+
+    if not range_header:
+        return send_file(path, mimetype=mimetype, conditional=True, max_age=0)
+
+    match = re.search(r"bytes=(\d+)-(\d*)", range_header)
+    if not match:
+        return Response("Invalid Range", status=416)
+
+    start = int(match.group(1))
+    end = match.group(2)
+    end = int(end) if end else file_size - 1
+
+    if start >= file_size or end >= file_size or start > end:
+        return Response("Requested Range Not Satisfiable", status=416, headers={"Content-Range": f"bytes */{file_size}"})
+
+    length = end - start + 1
+
+    def get_chunk():
+        with open(path, "rb") as f:
+            f.seek(start)
+            remaining = length
+            while remaining > 0:
+                chunk_size = min(remaining, 8192 * 16)
+                data = f.read(chunk_size)
+                if not data:
+                    break
+                remaining -= len(data)
+                yield data
+
+    response = Response(
+        stream_with_context(get_chunk()),
+        status=206,
+        mimetype=mimetype,
+        headers={
+            "Content-Range": f"bytes {start}-{end}/{file_size}",
+            "Accept-Ranges": "bytes",
+            "Content-Length": str(length),
+            "Cache-Control": "no-cache",
+        }
     )
+    return response
 
 
 @app.post("/api/jobs/<job_id>/trim")
