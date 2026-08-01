@@ -28,5 +28,3 @@
 - الاسم: علي قاسم
 - GitHub: https://github.com/aliqasimnasser1-afk
 - X: https://x.com/Aliqaseem71
-
-> للإنتاج، شغّل Flask خلف خادم تطبيقات مناسب واضبط حد الرفع والمهلة وفق أحجام الملفات المتوقعة.
