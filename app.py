@@ -538,14 +538,14 @@ def upload_file():
         shutil.rmtree(job_directory, ignore_errors=True)
         return jsonify(error=str(exc)), 400
 
-    download_stem = Path(original_name).stem.strip() or "media"
+    safe_download_stem = secure_filename(Path(original_name).stem) or "media"
     job = {
         "created_at": created_at,
         "directory": str(job_directory),
         "source_path": str(source_path),
         "output_path": str(output_path),
         "original_name": original_name,
-        "download_name": f"{download_stem}-مقصوص.{extension}",
+        "download_name": f"{safe_download_stem}-trimmed.{extension}",
         "extension": extension,
         "duration": info["duration"],
         "media_type": info["media_type"],
@@ -629,14 +629,14 @@ def upload_chunk():
         shutil.rmtree(job_directory, ignore_errors=True)
         return jsonify(error=str(exc)), 400
 
-    download_stem = Path(original_name).stem.strip() or "media"
+    safe_download_stem = secure_filename(Path(original_name).stem) or "media"
     job = {
         "created_at": created_at,
         "directory": str(job_directory),
         "source_path": str(source_path),
         "output_path": str(output_path),
         "original_name": original_name,
-        "download_name": f"{download_stem}-مقصوص.{extension}",
+        "download_name": f"{safe_download_stem}-trimmed.{extension}",
         "extension": extension,
         "duration": info["duration"],
         "media_type": info["media_type"],
@@ -839,7 +839,6 @@ def download_result(job_id: str):
         download_name=job["download_name"],
         conditional=True,
     )
-    response.call_on_close(lambda: remove_job_files(job_id))
     return response
 
 

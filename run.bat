@@ -34,6 +34,12 @@ pause
 exit /b 1
 
 :RUN_SERVER
+echo Checking and installing dependencies...
+"%PYTHON_CMD%" -m pip install -r requirements.txt
+if %errorlevel% neq 0 (
+    echo [WARNING] Failed to install dependencies automatically. Trying to run app...
+)
+
 echo Opening website http://localhost:5000 in browser...
 start http://localhost:5000
 

@@ -823,11 +823,10 @@ function probeLocalMediaFast(file) {
 }
 
 async function uploadFileChunked(file) {
-  let chunkSize = 16 * 1024 * 1024; // 16MB default
-  if (file.size > 800 * 1024 * 1024) {
-    chunkSize = 48 * 1024 * 1024; // 48MB for files > 800MB
-  } else if (file.size > 300 * 1024 * 1024) {
-    chunkSize = 32 * 1024 * 1024; // 32MB for files > 300MB
+  // Use a smaller chunk size for smoother progress and better mobile reliability
+  let chunkSize = 4 * 1024 * 1024; // 4MB default
+  if (file.size > 500 * 1024 * 1024) {
+    chunkSize = 8 * 1024 * 1024; // 8MB for files > 500MB
   }
   const totalChunks = Math.ceil(file.size / chunkSize);
   const jobId = Array.from(crypto.getRandomValues(new Uint8Array(16)))
@@ -835,30 +834,27 @@ async function uploadFileChunked(file) {
     .join("");
 
   const uploadStartTime = Date.now();
+  let chunkIndex = 0;
+  let cancelled = false;
+  let failed = false;
+  let errorMsg = "";
 
-  for (let i = 0; i < totalChunks; i++) {
-    if (state.uploadRequest === "cancelled") return;
+  const controller = new AbortController();
+  state.uploadRequest = controller;
 
-    const start = i * chunkSize;
-    const end = Math.min(file.size, start + chunkSize);
-    const chunk = file.slice(start, end);
+  // Track completed chunks bytes to calculate speed
+  const chunkProgress = Array(totalChunks).fill(0);
 
-    const formData = new FormData();
-    formData.append("chunk", chunk, file.name);
-    formData.append("chunk_index", i);
-    formData.append("total_chunks", totalChunks);
-    formData.append("job_id", jobId);
-    formData.append("filename", file.name);
-
-    const percent = Math.round(((start + (end - start) * 0.5) / file.size) * 100);
-    const currentMB = (end / (1024 * 1024)).toFixed(1);
+  const updateProgressDisplay = () => {
+    const totalUploaded = chunkProgress.reduce((a, b) => a + b, 0);
+    const percent = Math.min(99, Math.round((totalUploaded / file.size) * 100));
+    const currentMB = (totalUploaded / (1024 * 1024)).toFixed(1);
     const totalMB = (file.size / (1024 * 1024)).toFixed(1);
 
     const elapsedSeconds = (Date.now() - uploadStartTime) / 1000;
-    const uploadedBytesSoFar = start;
     let speedText = "جاري الحساب...";
-    if (elapsedSeconds > 0.5 && uploadedBytesSoFar > 0) {
-      const speedMBs = (uploadedBytesSoFar / (1024 * 1024)) / elapsedSeconds;
+    if (elapsedSeconds > 0.5 && totalUploaded > 0) {
+      const speedMBs = (totalUploaded / (1024 * 1024)) / elapsedSeconds;
       if (speedMBs >= 1.0) {
         speedText = `${speedMBs.toFixed(1)} MB/ثانية`;
       } else {
@@ -871,52 +867,96 @@ async function uploadFileChunked(file) {
       title: `جاري رفع الملف... (${currentMB} / ${totalMB} MB)`,
       note: `سرعة الرفع الحالية: ${speedText} • يرجى عدم إغلاق الصفحة.`,
     });
+  };
+
+  const uploadChunk = async (index) => {
+    if (cancelled || failed) return;
+
+    const start = index * chunkSize;
+    const end = Math.min(file.size, start + chunkSize);
+    const chunk = file.slice(start, end);
+
+    const formData = new FormData();
+    formData.append("chunk", chunk, file.name);
+    formData.append("chunk_index", index);
+    formData.append("total_chunks", totalChunks);
+    formData.append("job_id", jobId);
+    formData.append("filename", file.name);
 
     let success = false;
     let attempt = 0;
     const maxAttempts = 5;
-    let errorMsg = "";
 
-    while (!success && attempt < maxAttempts) {
-      if (state.uploadRequest === "cancelled") return;
+    while (!success && attempt < maxAttempts && !cancelled && !failed) {
       attempt++;
       try {
         const response = await fetch("/api/upload/chunk", {
           method: "POST",
           body: formData,
+          signal: controller.signal
         });
         if (response.status === 404) {
+          failed = true;
+          state.uploadRequest = null;
           uploadStandardFile(file);
           return;
         }
         const data = await response.json();
         if (!response.ok) throw new Error(data.error || "خطأ غير معروف في الخادم");
 
-        if (data.id && i === totalChunks - 1) {
+        chunkProgress[index] = end - start;
+        updateProgressDisplay();
+
+        if (data.id) {
           setProgress(100, { title: "تم رفع الملف بالكامل — نجهّز المعاينة…" });
+          state.uploadRequest = null;
           window.setTimeout(() => configureEditor(data), 200);
+          cancelled = true; // Stop other uploads since we are done
           return;
         }
         success = true;
       } catch (err) {
+        if (err.name === 'AbortError') {
+          if (!cancelled) {
+            cancelled = true;
+            state.uploadRequest = null;
+            showView("upload");
+            showNotice("تم إلغاء رفع الملف.");
+          }
+          return;
+        }
         errorMsg = err.message || "فشل الاتصال بالخادم";
-        console.warn(`Chunk ${i} upload failed (attempt ${attempt}/${maxAttempts}): ${errorMsg}`);
+        console.warn(`Chunk ${index} failed (attempt ${attempt}/${maxAttempts}): ${errorMsg}`);
         if (attempt < maxAttempts) {
-          await new Promise((resolve) => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, 1500));
         }
       }
     }
 
-    if (!success) {
-      if (errorMsg.includes("404")) {
-        uploadStandardFile(file);
-      } else {
-        showView("upload");
-        showError(`فشل رفع أجزاء الملف بعد عدة محاولات: ${errorMsg}`);
-      }
-      return;
+    if (!success && !cancelled && !failed) {
+      failed = true;
+      state.uploadRequest = null;
+      showView("upload");
+      showError(`فشل رفع أجزاء الملف بعد عدة محاولات: ${errorMsg}`);
     }
+  };
+
+  // Concurrency controller: run up to 3 uploads in parallel
+  const concurrencyLimit = 3;
+  const promises = [];
+
+  const worker = async () => {
+    while (chunkIndex < totalChunks && !cancelled && !failed) {
+      const currentIdx = chunkIndex++;
+      await uploadChunk(currentIdx);
+    }
+  };
+
+  for (let i = 0; i < Math.min(concurrencyLimit, totalChunks); i++) {
+    promises.push(worker());
   }
+
+  await Promise.all(promises);
 }
 
 function uploadStandardFile(file) {
@@ -991,7 +1031,7 @@ async function uploadFile(file) {
     }
   });
 
-  if (file.size > 100 * 1024 * 1024) {
+  if (file.size > 20 * 1024 * 1024) {
     uploadFileChunked(file);
     return;
   }
@@ -1007,8 +1047,28 @@ async function uploadFile(file) {
     const response = await fetch(elements.downloadButton.href);
     const blob = await response.blob();
     const extension = state.extension ? state.extension.toLowerCase() : "mp4";
-    const filename = `${elements.resultName.textContent || "video-trimmed"}`;
-    const file = new File([blob], filename, { type: blob.type || "video/mp4" });
+    
+    // Use a clean ASCII filename for iOS Safari / Android share sheets to prevent sharing failures
+    const cleanFilename = `trimfast_${Date.now()}.${extension}`;
+    
+    // Map extensions to clean standard mime-types if blob type is empty or generic
+    const mimeTypes = {
+      mp4: "video/mp4",
+      mov: "video/quicktime",
+      webm: "video/webm",
+      mkv: "video/x-matroska",
+      avi: "video/x-msvideo",
+      mp3: "audio/mpeg",
+      wav: "audio/wav",
+      m4a: "audio/mp4",
+      ogg: "audio/ogg",
+      flac: "audio/flac"
+    };
+    const fileType = blob.type && blob.type !== "application/octet-stream"
+      ? blob.type
+      : (mimeTypes[extension] || "video/mp4");
+
+    const file = new File([blob], cleanFilename, { type: fileType });
 
     if (navigator.canShare && navigator.canShare({ files: [file] })) {
       await navigator.share({
@@ -1056,7 +1116,10 @@ async function startTrim() {
     return;
   }
 
-  if (state.activeMedia) state.activeMedia.pause();
+  state.previewingClip = false;
+  [elements.video, elements.audio].forEach((media) => {
+    if (media) media.pause();
+  });
   showView("progress");
   setStep(2);
   const usesFastPath = state.aspectRatio === "original";
@@ -1227,8 +1290,10 @@ function showResult(data) {
   elements.resultSize.textContent = formatBytes(data.output_size);
   elements.resultDuration.textContent = formatDuration(data.output_duration || (end - start));
   elements.downloadButton.href = data.download_url;
+  elements.downloadButton.setAttribute("download", data.filename);
+  const isMobile = /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
   if (elements.shareButton) {
-    elements.shareButton.style.display = navigator.share ? "inline-flex" : "none";
+    elements.shareButton.style.display = (navigator.share && isMobile) ? "inline-flex" : "none";
   }
   showView("result");
   setStep(3);
